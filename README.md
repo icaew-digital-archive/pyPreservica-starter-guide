@@ -201,6 +201,117 @@ for asset in filter(only_assets, client.all_descendants(folder_ref)):
         break
 ```
 
+## Step 3.5: (OPTIONAL) Adding Command-Line Arguments to Your Script
+
+### What are Command-Line Arguments?
+Command-line arguments are like options you can give to your script when you run it. Instead of changing the code every time you want to do something different, you can tell the script what to do when you run it. For example:
+- Instead of hardcoding the number of assets to list, you can specify it when running the script
+- Instead of always using the root folder, you can specify a different folder
+- You can add a flag to show more detailed information
+
+### Enhancing Your Script with argparse
+
+Here's how to modify your script to use command-line arguments:
+
+```python
+import os
+import argparse
+from dotenv import load_dotenv
+from pyPreservica import *
+
+# Set up command-line argument parsing
+parser = argparse.ArgumentParser(description='List assets from Preservica')
+parser.add_argument('--folder', type=str, help='Folder reference to list assets from (default: root folder)')
+parser.add_argument('--limit', type=int, default=5, help='Number of assets to list (default: 5)')
+parser.add_argument('--verbose', action='store_true', help='Show more detailed information')
+args = parser.parse_args()
+
+# Load your secret info from the .env file
+load_dotenv(override=True)
+USERNAME = os.getenv('USERNAME')
+PASSWORD = os.getenv('PASSWORD')
+TENANT = os.getenv('TENANT')
+SERVER = os.getenv('SERVER')
+
+# Check that all required info is present
+if not USERNAME or not PASSWORD or not TENANT or not SERVER:
+    print("Missing one or more environment variables. Please check your .env file.")
+    exit(1)
+
+# Create the EntityAPI client object
+client = EntityAPI(username=USERNAME, password=PASSWORD, tenant=TENANT, server=SERVER)
+
+# Use the folder reference from command line, or None for root folder
+folder_ref = args.folder
+
+# List assets in the repository, following the official filter usage
+count = 0
+for asset in filter(only_assets, client.all_descendants(folder_ref)):
+    # Fetch the full asset object if you need more details
+    asset_full = client.asset(asset.reference)
+    
+    if args.verbose:
+        # Show more detailed information
+        print(f"Asset ID: {asset_full.reference}")
+        print(f"Title: {asset_full.title}")
+        print(f"Description: {asset_full.description}")
+        print(f"Security Tag: {asset_full.security_tag}")
+        print("-" * 50)
+    else:
+        # Show basic information
+        print(f"Asset ID: {asset_full.reference}, Title: {asset_full.title}")
+    
+    count += 1
+    if count >= args.limit:
+        break
+```
+
+### Running Your Script with Arguments
+
+#### On Windows:
+```bash
+# List 5 assets from root folder (default)
+python my_script.py
+
+# List 10 assets from a specific folder
+python my_script.py --folder "bb45f999-7c07-4471-9c30-54b057c500ff" --limit 10
+
+# Show detailed information for 3 assets
+python my_script.py --limit 3 --verbose
+
+# Get help on available options
+python my_script.py --help
+```
+
+#### On Linux/Ubuntu:
+```bash
+# List 5 assets from root folder (default)
+python3 my_script.py
+
+# List 10 assets from a specific folder
+python3 my_script.py --folder "bb45f999-7c07-4471-9c30-54b057c500ff" --limit 10
+
+# Show detailed information for 3 assets
+python3 my_script.py --limit 3 --verbose
+
+# Get help on available options
+python3 my_script.py --help
+```
+
+### Understanding the Arguments
+- `--folder`: Optional folder reference to list assets from
+- `--limit`: Number of assets to list (default: 5)
+- `--verbose`: Flag to show more detailed information
+- `--help`: Shows help message with all available options
+
+### Benefits of Using Command-Line Arguments
+1. **Flexibility**: Change script behavior without editing code
+2. **Reusability**: Use the same script for different purposes
+3. **Documentation**: Built-in help system with `--help`
+4. **Automation**: Easier to use in automated scripts or workflows
+
+Note: This section is optional. You can start with the basic script and add command-line arguments later when you're comfortable with the basics.
+
 ## Step 4: Running Your Script
 
 ### What is Running a Script?
